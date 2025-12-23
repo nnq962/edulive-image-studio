@@ -1,0 +1,87 @@
+# -----------------------------
+# Python
+# -----------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+pytest_cache/
+coverage.xml
+*.cover
+*.py,cover
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# IDEs / Editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs & debug
+*.log
+*.pot
+*.pyre/
+.mypy_cache/
+.dmypy.json
+.pytype/
+__pypackages__/
+
+# Profiling data
+.prof
+.profraw
+
+# -----------------------------
+# OS / MacOS
+# -----------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+# Icon?
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+
+# -----------------------------
+# Node / Frontend (nếu dùng React/Vite)
+# -----------------------------
+node_modules/
+dist/
+*.local
+
+# Env files (nhớ commit .env.example thay vì .env)
+.env
+.env.*
+!.env.example
+
+# Folder
+data/
+ai_models/
+audio_cache/
+
+# Python files
+vip.py

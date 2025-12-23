@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Midjourney API Demo</title>
+    <style>
+        /* CSS Đơn giản - Dark Mode Style */
+        :root {
+            --bg-color: #1a1b26;
+            --card-bg: #24283b;
+            --text-color: #c0caf5;
+            --primary: #7aa2f7;
+            --success: #9ece6a;
+            --danger: #f7768e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 { text-align: center; color: var(--primary); }
+
+        /* Form Style */
+        .card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #414868;
+            background-color: #16161e;
+            color: white;
+            box-sizing: border-box; /* Fix lỗi tràn padding */
+        }
+        
+        textarea { height: 80px; resize: vertical; }
+
+        .row { display: flex; gap: 10px; }
+        .col { flex: 1; }
+
+        /* Buttons */
+        button {
+            cursor: pointer;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary { background-color: var(--primary); color: #1a1b26; width: 100%; font-size: 16px; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-primary:disabled { background-color: #565f89; cursor: not-allowed; }
+
+        .btn-upscale {
+            background-color: var(--card-bg);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            flex: 1;
+            margin: 5px;
+        }
+        .btn-upscale:hover { background-color: var(--primary); color: #1a1b26; }
+
+        /* Result Area */
+        .result-area { text-align: center; display: none; }
+        .grid-image { 
+            width: 100%; 
+            border-radius: 8px; 
+            margin-bottom: 15px; 
+            border: 2px solid #414868;
+        }
+
+        .upscale-controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .loading { color: var(--primary); font-style: italic; margin-top: 10px; display: none;}
+        
+        .final-result { margin-top: 30px; border-top: 1px solid #414868; padding-top: 20px; display: none; }
+        .final-image { width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(122, 162, 247, 0.3); }
+
+        /* Logs */
+        #logs { 
+            font-family: monospace; 
+            font-size: 12px; 
+            color: #565f89; 
+            margin-top: 10px; 
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎨 Midjourney API Tester</h1>
+
+        <div class="card">
+            <div class="form-group">
+                <label>Prompt (Mô tả ảnh)</label>
+                <textarea id="prompt" placeholder="Ex: A cute robot working on laptop, cyberpunk style..."></textarea>
+            </div>
+
+            <div class="row">
+                <div class="col form-group">
+                    <label>Aspect Ratio</label>
+                    <select id="aspect_ratio">
+                        <option value="16:9">16:9 (Ngang)</option>
+                        <option value="9:16">9:16 (Dọc)</option>
+                        <option value="1:1">1:1 (Vuông)</option>
+                        <option value="4:3">4:3</option>
+                    </select>
+                </div>
+                <div class="col form-group">
+                    <label>Model</label>
+                    <select id="model">
+                        <option value="standard">Standard (V7)</option>
+                        <option value="v6">Model V6.1</option>
+                        <option value="anime">Anime (Niji 6)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col form-group">
+                    <label>Stylize</label>
+                    <select id="stylize">
+                        <option value="medium">Medium (Cân bằng)</option>
+                        <option value="low">Low (Thực tế)</option>
+                        <option value="high">High (Nghệ thuật)</option>
+                    </select>
+                </div>
+                <div class="col form-group">
+                    <label>Negative Prompt</label>
+                    <input type="text" id="negative_prompt" placeholder="Ex: text, watermark, ugly">
+                </div>
+            </div>
+
+            <button id="btnGenerate" class="btn-primary" onclick="generateImage()">🚀 TẠO ẢNH (GENERATE)</button>
+            <div id="loadingGen" class="loading">⏳ Đang gọi Bot vẽ (Mất khoảng 30-60s)... vui lòng chờ đừng tắt tab.</div>
+            <div id="logs"></div>
+        </div>
+
+        <div id="gridResult" class="card result-area">
+            <h3>📸 Kết quả bản nháp (Grid)</h3>
+            <img id="imgGrid" class="grid-image" src="" alt="Grid Image">
+            
+            <p>Chọn 1 ảnh để Upscale (Làm nét):</p>
+            <div class="upscale-controls">
+                <button class="btn-upscale" onclick="upscaleImage(1)">U1 (Trên Trái)</button>
+                <button class="btn-upscale" onclick="upscaleImage(2)">U2 (Trên Phải)</button>
+                <button class="btn-upscale" onclick="upscaleImage(3)">U3 (Dưới Trái)</button>
+                <button class="btn-upscale" onclick="upscaleImage(4)">U4 (Dưới Phải)</button>
+            </div>
+            <div id="loadingUpscale" class="loading">⏳ Đang Upscale (Khoảng 5-10s)...</div>
+        </div>
+
+        <div id="finalResult" class="card result-area final-result">
+            <h3 style="color: var(--success)">✨ Ảnh hoàn thiện (HD)</h3>
+            <img id="imgFinal" class="final-image" src="" alt="Upscaled Image">
+            <p style="margin-top: 10px;"><a id="linkFinal" href="#" target="_blank" style="color: var(--primary)">Mở link gốc</a></p>
+        </div>
+    </div>
+
+    <script>
+        // CẤU HÌNH URL API (Nếu chạy local thì để localhost:3000)
+        const API_BASE_URL = '/api/v1';
+
+        // Biến lưu tạm thông tin để dùng cho bước Upscale
+        let currentMessageId = null;
+        let currentHash = null;
+
+        function log(msg) {
+            const logDiv = document.getElementById('logs');
+            logDiv.innerText = `> ${msg}`;
+            console.log(msg);
+        }
+
+        // --- BƯỚC 1: GỌI API GENERATE ---
+        async function generateImage() {
+            const prompt = document.getElementById('prompt').value;
+            if (!prompt) return alert("Vui lòng nhập Prompt!");
+
+            // UI Update
+            document.getElementById('btnGenerate').disabled = true;
+            document.getElementById('loadingGen').style.display = 'block';
+            document.getElementById('gridResult').style.display = 'none';
+            document.getElementById('finalResult').style.display = 'none';
+            log("Đang gửi yêu cầu tạo ảnh...");
+
+            try {
+                const payload = {
+                    prompt: prompt,
+                    aspect_ratio: document.getElementById('aspect_ratio').value,
+                    model: document.getElementById('model').value,
+                    stylize: document.getElementById('stylize').value,
+                    negative_prompt: document.getElementById('negative_prompt').value
+                };
+
+                const response = await fetch(`${API_BASE_URL}/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    log("Tạo ảnh thành công!");
+                    // Hiển thị ảnh Grid
+                    document.getElementById('imgGrid').src = data.data.grid_image_url;
+                    document.getElementById('gridResult').style.display = 'block';
+                    
+                    // Lưu lại ID và Hash để dùng cho Upscale
+                    currentMessageId = data.data.message_id;
+                    currentHash = data.data.hash;
+                } else {
+                    alert("Lỗi: " + (data.error || "Không xác định"));
+                    log("Lỗi: " + JSON.stringify(data));
+                }
+
+            } catch (error) {
+                alert("Lỗi kết nối Server!");
+                log("Exception: " + error);
+            } finally {
+                document.getElementById('btnGenerate').disabled = false;
+                document.getElementById('loadingGen').style.display = 'none';
+            }
+        }
+
+        // --- BƯỚC 2: GỌI API UPSCALE ---
+        async function upscaleImage(index) {
+            if (!currentMessageId || !currentHash) return alert("Thiếu thông tin ảnh gốc!");
+
+            // UI Update
+            document.getElementById('loadingUpscale').style.display = 'block';
+            document.getElementById('finalResult').style.display = 'none';
+            
+            try {
+                const payload = {
+                    message_id: currentMessageId,
+                    hash: currentHash,
+                    index: index
+                };
+
+                const response = await fetch(`${API_BASE_URL}/upscale`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    // Hiển thị ảnh Final
+                    document.getElementById('imgFinal').src = data.data.upscaled_image_url;
+                    document.getElementById('linkFinal').href = data.data.upscaled_image_url;
+                    document.getElementById('finalResult').style.display = 'block';
+                    
+                    // Cuộn xuống xem kết quả
+                    document.getElementById('finalResult').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert("Upscale thất bại: " + data.error);
+                }
+
+            } catch (error) {
+                alert("Lỗi kết nối khi Upscale!");
+                console.error(error);
+            } finally {
+                document.getElementById('loadingUpscale').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
