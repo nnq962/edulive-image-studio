@@ -82,6 +82,3 @@ dist/
 data/
 ai_models/
 audio_cache/
-
-# Python files
-vip.py
