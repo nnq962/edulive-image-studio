@@ -166,7 +166,6 @@ async function startServer() {
         app.listen(PORT, '0.0.0.0', () => { // Thêm '0.0.0.0' để mở full cổng mạng
             console.log(`>>> Server đang chạy!`);
             console.log(`>>> Link Local:   http://localhost:${PORT}`);
-            console.log(`>>> Link cho AE:  http://192.168.1.144:${PORT}`);
         });
     } catch (err) {
         console.error("Lỗi:", err);
